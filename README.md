@@ -37,6 +37,64 @@ Shimmer research sensors are wireless wearable devices that capture physiologica
 
 The API supports a wide range of sensors including accelerometers, gyroscopes, magnetometers, ECG, EMG, GSR, and more.
 
+### System Architecture
+
+```mermaid
+graph TB
+    subgraph "Android Application Layer"
+        A[Your Android App]
+        B[Activity/Service]
+        C[Message Handlers]
+    end
+    
+    subgraph "Shimmer Android API"
+        D[Shimmer Class]
+        E[ShimmerBluetoothManager]
+        F[ObjectCluster]
+        G[Configuration Classes]
+    end
+    
+    subgraph "Communication Layer"
+        H[Bluetooth Classic Driver]
+        I[BLE Driver]
+        J[Serial Port Interface]
+        K[Radio Protocol Layer]
+    end
+    
+    subgraph "Hardware Layer"
+        L[Shimmer3 Devices]
+        M[Verisense Devices]
+        N[Shimmer3 BLE Devices]
+        O[Other Shimmer Hardware]
+    end
+    
+    A --> B
+    B --> C
+    C <--> D
+    D <--> E
+    D --> F
+    D --> G
+    E <--> H
+    E <--> I
+    H --> J
+    I --> J
+    J <--> K
+    K <--> L
+    K <--> M
+    K <--> N
+    K <--> O
+    
+    classDef app fill:#e1f5fe
+    classDef api fill:#f3e5f5
+    classDef comm fill:#fff3e0
+    classDef hw fill:#e8f5e8
+    
+    class A,B,C app
+    class D,E,F,G api
+    class H,I,J,K comm
+    class L,M,N,O hw
+```
+
 ## Features
 
 ### 🔌 Connectivity
@@ -84,6 +142,70 @@ The API supports a wide range of sensors including accelerometers, gyroscopes, m
 | **Shimmer3R** | Bluetooth Classic | Research-grade sensors, extended battery life |
 | **Verisense** | Bluetooth Low Energy | Data logging, wireless sync, extended deployment |
 | **Shimmer3 BLE** | Bluetooth Low Energy | Low power consumption, mobile integration |
+
+### Device Compatibility Overview
+
+```mermaid
+graph LR
+    subgraph "Shimmer Devices"
+        A[Shimmer3<br/>Classic BT]
+        B[Shimmer3R<br/>Classic BT]
+        C[Verisense<br/>BLE]
+        D[Shimmer3 BLE<br/>BLE]
+    end
+    
+    subgraph "Connection Types"
+        E[Bluetooth Classic<br/>SPP Profile]
+        F[Bluetooth Low Energy<br/>GATT Profile]
+    end
+    
+    subgraph "Android API Components"
+        G[Shimmer.java]
+        H[ShimmerBluetoothManager]
+        I[VerisenseDeviceAndroid.java]
+        J[Shimmer3BLEAndroid.java]
+    end
+    
+    subgraph "Supported Features"
+        K[Real-time Streaming]
+        L[Device Configuration]
+        M[Data Logging]
+        N[Wireless Sync]
+        O[3D Visualization]
+    end
+    
+    A --> E
+    B --> E
+    C --> F
+    D --> F
+    
+    E --> G
+    E --> H
+    F --> I
+    F --> J
+    
+    G --> K
+    G --> L
+    H --> K
+    H --> L
+    I --> M
+    I --> N
+    J --> K
+    J --> L
+    
+    K --> O
+    L --> O
+    
+    classDef device fill:#e8f5e8
+    classDef connection fill:#e3f2fd
+    classDef api fill:#fff3e0
+    classDef feature fill:#f3e5f5
+    
+    class A,B,C,D device
+    class E,F connection
+    class G,H,I,J api
+    class K,L,M,N,O feature
+```
 
 ## Prerequisites
 
@@ -198,6 +320,46 @@ Add required permissions to your `AndroidManifest.xml`:
 ```
 
 ## Quick Start
+
+### Connection Setup Flow
+
+```mermaid
+sequenceDiagram
+    participant App as Android App
+    participant API as Shimmer API
+    participant BT as Bluetooth Layer
+    participant Device as Shimmer Device
+    
+    App->>App: Request Bluetooth Permissions
+    App->>API: Initialize Handler & Shimmer instance
+    App->>API: shimmer.connect(bluetoothAddress)
+    API->>BT: Establish Bluetooth connection
+    BT->>Device: Connect to device
+    Device-->>BT: Connection established
+    BT-->>API: STATE_CONNECTED
+    API-->>App: MSG_IDENTIFIER_STATE_CHANGE
+    
+    App->>API: Configure sensors
+    API->>Device: Send sensor configuration
+    Device-->>API: Configuration acknowledged
+    
+    App->>API: shimmer.startStreaming()
+    API->>Device: Start data streaming command
+    Device-->>API: Begin streaming sensor data
+    
+    loop Data Streaming
+        Device-->>API: Sensor data packets
+        API-->>App: MSG_IDENTIFIER_DATA_PACKET
+        App->>App: Process ObjectCluster data
+    end
+    
+    App->>API: shimmer.stopStreaming()
+    App->>API: shimmer.disconnect()
+    API->>BT: Close connection
+    BT->>Device: Disconnect
+```
+
+### Basic Implementation Example
 
 Here's a minimal example to connect to a Shimmer device and start streaming data:
 
@@ -314,6 +476,89 @@ ShimmerAndroidAPI/
 | **ShimmerService** | Background service for managing multiple device connections |
 | **GUI Utilities** | Pre-built fragments and dialogs for device management |
 
+### Software Architecture Diagram
+
+```mermaid
+graph TD
+    subgraph "Application Layer"
+        AA[MainActivity/Activity]
+        AB[Background Service]
+        AC[Message Handlers]
+        AD[GUI Fragments]
+    end
+    
+    subgraph "Core API Layer"
+        BA[Shimmer.java]
+        BB[Shimmer4Android.java] 
+        BC[VerisenseDeviceAndroid.java]
+        BD[ShimmerBluetoothManagerAndroid.java]
+    end
+    
+    subgraph "Data Management"
+        CA[ObjectCluster]
+        CB[Configuration Classes]
+        CC[SensorDetails]
+        CD[ChannelDetails]
+    end
+    
+    subgraph "Communication Drivers"
+        DA[ShimmerSerialPortAndroid]
+        DB[Shimmer3BleAndroidRadioByteCommunication]
+        DC[Shimmer3RAndroidRadioByteCommunication]
+        DD[VerisenseBleAndroidRadioByteCommunication]
+    end
+    
+    subgraph "Protocol Layer"
+        EA[CommsProtocolRadio]
+        EB[LiteProtocol]
+        EC[VerisenseProtocolByteCommunication]
+    end
+    
+    subgraph "Android System Layer"
+        FA[BluetoothAdapter]
+        FB[BluetoothDevice]
+        FC[BluetoothLeScanner]
+    end
+    
+    AA --> BA
+    AB --> BD
+    AC <--> BA
+    AD --> BD
+    
+    BA --> CA
+    BB --> CB
+    BC --> CC
+    BD --> CD
+    
+    BA --> DA
+    BB --> DB
+    BC --> DD
+    BD --> DC
+    
+    DA --> EA
+    DB --> EB
+    DC --> EC
+    DD --> EA
+    
+    EA --> FA
+    EB --> FB
+    EC --> FC
+    
+    classDef app fill:#e3f2fd
+    classDef core fill:#f1f8e9
+    classDef data fill:#fff8e1
+    classDef comm fill:#fce4ec
+    classDef protocol fill:#f3e5f5
+    classDef system fill:#e8f5e8
+    
+    class AA,AB,AC,AD app
+    class BA,BB,BC,BD core
+    class CA,CB,CC,CD data
+    class DA,DB,DC,DD comm
+    class EA,EB,EC protocol
+    class FA,FB,FC system
+```
+
 ## Examples
 
 ### 1. Bluetooth Manager Example
@@ -415,6 +660,84 @@ ShimmerAndroidInstrumentDriver/multiverisenseblebasicexample/
 - Battery monitoring
 
 ## API Documentation
+
+### Data Flow Architecture
+
+```mermaid
+flowchart TD
+    subgraph "Shimmer Hardware"
+        A[Accelerometer]
+        B[Gyroscope]
+        C[Magnetometer]
+        D[ECG/EMG Sensors]
+        E[Other Sensors]
+    end
+    
+    subgraph "Device Firmware"
+        F[Sensor Data Collection]
+        G[Data Packaging]
+        H[Bluetooth Transmission]
+    end
+    
+    subgraph "Android Bluetooth Stack"
+        I[Bluetooth Classic/BLE]
+        J[Socket/GATT Connection]
+    end
+    
+    subgraph "Shimmer API Communication Layer"
+        K[Serial Port Interface]
+        L[Radio Protocol Handler]
+        M[Byte Communication Layer]
+    end
+    
+    subgraph "Shimmer API Core"
+        N[Shimmer Device Instance]
+        O[Data Parser/Calibrator]
+        P[ObjectCluster Creation]
+    end
+    
+    subgraph "Android Application"
+        Q[Message Handler]
+        R[UI Thread]
+        S[Data Processing]
+        T[Storage/Display]
+    end
+    
+    A --> F
+    B --> F
+    C --> F
+    D --> F
+    E --> F
+    
+    F --> G
+    G --> H
+    H --> I
+    I --> J
+    J --> K
+    K --> L
+    L --> M
+    M --> N
+    N --> O
+    O --> P
+    P --> Q
+    Q --> R
+    Q --> S
+    S --> T
+    
+    classDef hardware fill:#ffcdd2
+    classDef firmware fill:#f8bbd9
+    classDef bluetooth fill:#e1bee7
+    classDef comms fill:#d1c4e9
+    classDef api fill:#c5cae9
+    classDef app fill:#bbdefb
+    
+    class A,B,C,D,E hardware
+    class F,G,H firmware
+    class I,J bluetooth
+    class K,L,M comms
+    class N,O,P api
+    class Q,R,S,T app
+```
 
 ### Core Classes
 
@@ -545,6 +868,92 @@ private Handler messageHandler = new Handler(Looper.getMainLooper()) {
         }
     }
 };
+```
+
+### API Usage Workflow
+
+```mermaid
+graph TD
+    subgraph "Application Initialization"
+        A[Create Message Handler]
+        B[Initialize Shimmer Instance]
+        C[Request Runtime Permissions]
+    end
+    
+    subgraph "Device Discovery & Connection"
+        D[Scan for Devices]
+        E[Select Device]
+        F[Connect to Device]
+        G[Wait for Connection State]
+    end
+    
+    subgraph "Device Configuration"
+        H[Configure Enabled Sensors]
+        I[Set Sampling Rate]
+        J[Configure Sensor Ranges]
+        K[Apply Calibration Settings]
+    end
+    
+    subgraph "Data Streaming"
+        L[Start Streaming]
+        M[Receive Data Packets]
+        N[Parse ObjectCluster]
+        O[Process Sensor Data]
+    end
+    
+    subgraph "Data Processing Options"
+        P[Real-time Display]
+        Q[Store to Database]
+        R[Export to File]
+        S[Send to Cloud]
+    end
+    
+    subgraph "Cleanup & Disconnection"
+        T[Stop Streaming]
+        U[Disconnect Device]
+        V[Clean Resources]
+    end
+    
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    H --> I
+    I --> J
+    J --> K
+    K --> L
+    L --> M
+    M --> N
+    N --> O
+    
+    O --> P
+    O --> Q
+    O --> R
+    O --> S
+    
+    P --> T
+    Q --> T
+    R --> T
+    S --> T
+    T --> U
+    U --> V
+    
+    classDef init fill:#e8f5e8
+    classDef connection fill:#e3f2fd
+    classDef config fill:#fff3e0
+    classDef stream fill:#f3e5f5
+    classDef process fill:#fce4ec
+    classDef cleanup fill:#ffebee
+    
+    class A,B,C init
+    class D,E,F,G connection
+    class H,I,J,K config
+    class L,M,N,O stream
+    class P,Q,R,S process
+    class T,U,V cleanup
 ```
 
 ### Sensor Channel Names
@@ -699,6 +1108,64 @@ if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
 ```
 
 ## Troubleshooting
+
+### Troubleshooting Flowchart
+
+```mermaid
+flowchart TD
+    A[Connection Issues?] -->|Yes| B{Bluetooth Classic or BLE?}
+    A -->|No| C[Data Reception Issues?]
+    
+    B -->|Classic| D[Device Paired?]
+    B -->|BLE| E[Location Permission Granted?]
+    
+    D -->|No| F[Pair Device in Android Settings]
+    D -->|Yes| G[Clear Bluetooth Cache]
+    
+    E -->|No| H[Request Location Permission]
+    E -->|Yes| I[Location Services Enabled?]
+    
+    F --> J[Try Connection Again]
+    G --> K[Restart Bluetooth]
+    H --> L[Enable Location Services]
+    I -->|No| L
+    I -->|Yes| M[Use Connection Retry Logic]
+    
+    K --> N[Use Insecure Socket if Needed]
+    L --> M
+    M --> O[Check BLE Support]
+    N --> J
+    O --> J
+    
+    C -->|Yes| P{Data Format Issues?}
+    P -->|Yes| Q[Check Channel Names]
+    P -->|No| R[Performance Issues?]
+    
+    Q --> S[Verify ObjectCluster Parsing]
+    R -->|Yes| T[Enable Efficient Arrays]
+    R -->|No| U[Build/Dependency Issues?]
+    
+    S --> V[Use Correct Data Format CAL/RAW/UNCAL]
+    T --> W[Reduce UI Update Frequency]
+    U -->|Yes| X[Clean and Rebuild Project]
+    
+    W --> Y[Process Data on Background Thread]
+    X --> Z[Check GitHub Packages Authentication]
+    V --> AA[Solution Found]
+    Y --> AA
+    Z --> AA
+    J --> AA
+    
+    classDef problem fill:#ffcdd2
+    classDef solution fill:#c8e6c9
+    classDef decision fill:#fff9c4
+    classDef action fill:#e1f5fe
+    
+    class A,C problem
+    class B,D,E,I,P,R,U decision
+    class F,G,H,K,L,M,N,O,Q,S,T,V,W,X,Z action
+    class AA,J solution
+```
 
 ### Common Connection Issues
 
